@@ -1,0 +1,45 @@
+services:
+  pg:
+    build: ./pg
+    container_name: pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: >
+        --locale=ru_RU.UTF-8
+        --encoding=UTF8
+        --auth-local=scram-sha-256
+        --auth-host=scram-sha-256
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  pinger:
+    build: .
+    image: kali/pg-pinger:1.0.0
+    container_name: pg-pinger
+    depends_on:
+      pg:
+        condition: service_healthy
+    env_file: .env
+    volumes:
+      - pingerlogs:/var/log/pinger
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  pingerlogs:
+
+
+
+
+
+
+
